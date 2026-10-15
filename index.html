@@ -1,0 +1,744 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Conversor a 20 ºC</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: ferramenta de bancada. Abas de produto no topo, dados à esquerda,
+   resultados com a fórmula ao lado à direita, limites e fontes embaixo. */
+:root {
+  --bg: #eaf0f1;
+  --surface: #ffffff;
+  --surface-2: #f3f7f8;
+  --fg: #14232a;
+  --muted: #53666d;
+  --line: #cfdadd;
+  --accent: #0b5d73;
+  --accent-fg: #ffffff;
+  --accent-soft: #d8eaf0;
+  --warn-bg: #fff3d4;
+  --warn-fg: #664600;
+  --warn-line: #e0b445;
+  --crit-bg: #fde7e4;
+  --crit-fg: #86201a;
+  --crit-line: #e49a92;
+  --ok-bg: #dff1e6;
+  --ok-fg: #17562f;
+  --ok-line: #8ec9a2;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e191e;
+    --surface: #162329;
+    --surface-2: #1b2b32;
+    --fg: #e3eef1;
+    --muted: #97aeb6;
+    --line: #2a3c44;
+    --accent: #5cc0d8;
+    --accent-fg: #06212a;
+    --accent-soft: #1b3a45;
+    --warn-bg: #392f10;
+    --warn-fg: #f0d48e;
+    --warn-line: #7a6120;
+    --crit-bg: #3b1b19;
+    --crit-fg: #f4b6af;
+    --crit-line: #7d3a35;
+    --ok-bg: #153325;
+    --ok-fg: #9fdcb5;
+    --ok-line: #2f6b49;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e191e;
+  --surface: #162329;
+  --surface-2: #1b2b32;
+  --fg: #e3eef1;
+  --muted: #97aeb6;
+  --line: #2a3c44;
+  --accent: #5cc0d8;
+  --accent-fg: #06212a;
+  --accent-soft: #1b3a45;
+  --warn-bg: #392f10;
+  --warn-fg: #f0d48e;
+  --warn-line: #7a6120;
+  --crit-bg: #3b1b19;
+  --crit-fg: #f4b6af;
+  --crit-line: #7d3a35;
+  --ok-bg: #153325;
+  --ok-fg: #9fdcb5;
+  --ok-line: #2f6b49;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  padding-inline: 16px;
+  padding-block: 24px 40px;
+}
+.wrap { max-width: 1100px; margin-inline: auto; display: flex; flex-direction: column; gap: 20px; }
+h1 { font-size: 24px; line-height: 1.2; font-weight: 600; margin: 0; text-wrap: balance; }
+h2 { font-size: 16px; font-weight: 600; margin: 0; }
+h3 { font-size: 12px; font-weight: 500; margin: 0; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+p { margin: 0; }
+sub { font-size: .72em; line-height: 0; }
+.sub { color: var(--muted); max-width: 70ch; margin-top: 6px; }
+
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.tabs button {
+  font: inherit; font-weight: 500; color: var(--fg);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+  padding: 9px 14px; min-height: 40px; cursor: pointer;
+}
+.tabs button:hover { border-color: var(--accent); }
+.tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 330px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.tag { font-size: 12px; padding: 2px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field label { font-weight: 500; font-size: 14px; }
+.field .hint { color: var(--muted); font-size: 12.5px; }
+.box { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); min-width: 0; }
+.box:focus-within { border-color: var(--accent); outline: 2px solid var(--accent); outline-offset: 0; }
+.box input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--fg); font: 500 16px var(--font-mono); padding: 10px 12px; outline: none; font-variant-numeric: tabular-nums; }
+.box .u { padding-inline: 12px; color: var(--muted); font-size: 13px; white-space: nowrap; }
+.field[data-bad="true"] .box { border-color: var(--crit-line); background: var(--crit-bg); }
+.err { color: var(--crit-fg); font-size: 12.5px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { font: inherit; font-size: 13.5px; color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.results { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.msg { border: 1px solid; border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.msg strong { font-weight: 600; }
+.msg.crit { background: var(--crit-bg); color: var(--crit-fg); border-color: var(--crit-line); }
+.msg.info { background: var(--surface); color: var(--muted); border-color: var(--line); border-style: dashed; }
+.res { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 18px; display: grid; grid-template-columns: minmax(0, 230px) minmax(0, 1fr); gap: 20px; }
+.res-val { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.big { font: 500 30px/1.1 var(--font-mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.big span { font-size: 14px; color: var(--muted); font-weight: 400; }
+.alt { font: 400 14px var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip { font-size: 12px; font-weight: 500; padding: 3px 9px; border-radius: 99px; border: 1px solid; }
+.chip.ok { background: var(--ok-bg); color: var(--ok-fg); border-color: var(--ok-line); }
+.chip.warn { background: var(--warn-bg); color: var(--warn-fg); border-color: var(--warn-line); }
+.chip.neutro { background: var(--surface-2); color: var(--muted); border-color: var(--line); }
+.res-why { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.formula { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; overflow-x: auto; }
+.formula code { font: 400 14px var(--font-mono); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.formula .num { color: var(--accent); }
+.legend { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 3px 12px; font-size: 13.5px; }
+.legend dt { font-family: var(--font-mono); color: var(--accent); }
+.legend dd { margin: 0; color: var(--muted); }
+.note { font-size: 13px; color: var(--muted); }
+
+.limits table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.limits th, .limits td { text-align: left; vertical-align: top; padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line); }
+.limits th { font-weight: 500; width: 26%; color: var(--muted); }
+.limits td { font-variant-numeric: tabular-nums; }
+.tscroll { overflow-x: auto; }
+.sources { font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+.sources a { color: var(--accent); }
+.sources ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 2px; }
+
+@media (max-width: 820px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  .res { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .limits th { width: 34%; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Conversor de combustíveis a 20 ºC</h1>
+    <p class="sub">Densidade convertida, fator de correção do caminhão-tanque (CT) e volume a 20 ºC.</p>
+  </header>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Produto"></nav>
+
+  <div class="grid">
+    <section class="card" aria-labelledby="h-dados">
+      <div class="card-head">
+        <h2 id="h-dados">Dados</h2>
+        <span class="tag" id="tag-ex" hidden>Valores de exemplo</span>
+      </div>
+
+      <div class="field" id="w-dens">
+        <label for="f-dens">Densidade da amostra</label>
+        <div class="box"><input id="f-dens" type="text" inputmode="decimal" autocomplete="off"><span class="u">kg/m³</span></div>
+        <span class="hint">Aceita 857 (kg/m³) ou 0,857 (g/cm³).</span>
+        <p class="err" id="e-dens" hidden></p>
+      </div>
+
+      <div class="field" id="w-ta">
+        <label for="f-ta">Temperatura da amostra</label>
+        <div class="box"><input id="f-ta" type="text" inputmode="decimal" autocomplete="off"><span class="u">ºC</span></div>
+        <p class="err" id="e-ta" hidden></p>
+      </div>
+
+      <div class="field" id="w-tct">
+        <label for="f-tct">Temperatura do CT</label>
+        <div class="box"><input id="f-tct" type="text" inputmode="decimal" autocomplete="off"><span class="u">ºC</span></div>
+        <p class="err" id="e-tct" hidden></p>
+      </div>
+
+      <div class="field" id="w-vol">
+        <label for="f-vol">Volume ambiente <span class="hint">(opcional)</span></label>
+        <div class="box"><input id="f-vol" type="text" inputmode="decimal" autocomplete="off"><span class="u">L</span></div>
+        <p class="err" id="e-vol" hidden></p>
+      </div>
+
+      <div class="field" id="w-comp">
+        <label for="f-comp">Complete <span class="hint">(opcional)</span></label>
+        <div class="box"><input id="f-comp" type="text" inputmode="decimal" autocomplete="off"><span class="u">L</span></div>
+        <p class="err" id="e-comp" hidden></p>
+      </div>
+
+      <div class="field" id="w-fat">
+        <label for="f-fat">Volume faturado <span class="hint">(opcional)</span></label>
+        <div class="box"><input id="f-fat" type="text" inputmode="decimal" autocomplete="off"><span class="u">L</span></div>
+        <p class="err" id="e-fat" hidden></p>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn" id="b-limpar">Limpar</button>
+        <button type="button" class="btn" id="b-exemplo">Voltar ao exemplo</button>
+      </div>
+    </section>
+
+    <section class="results" id="out" aria-live="polite"></section>
+  </div>
+
+  <section class="card limits" aria-labelledby="h-lim">
+    <h2 id="h-lim">Limites e fontes</h2>
+    <div class="tscroll"><table id="t-lim"></table></div>
+    <p class="note" id="n-lim"></p>
+    <div class="sources" id="src"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- Dados dos produtos ---------- */
+  var ORDEM = ["biodiesel", "diesel", "gasolina", "anidro", "hidratado"];
+  var T_REF = 20;
+  var TEMP_MIN = 0, TEMP_MAX = 60;
+
+  var PRODUTOS = {
+    biodiesel: {
+      nome: "Biodiesel",
+      beta: 0.00085,
+      betaNota: "Valor informado por você; ainda não confirmado em norma.",
+      espec: { min: 850, max: 900, rotulo: "especificação ANP",
+        texto: "850,0 a 900,0 kg/m³ (Res. ANP 920/2023). A Res. 989/2025 alterou a Tabela I dessa resolução; confira se a faixa continua igual." },
+      bloqueio: { min: 840, max: 910 },
+      exemplo: { dens: "880", ta: "30", tct: "28", vol: "25000" }
+    },
+    diesel: {
+      nome: "Diesel",
+      beta: 0.00078,
+      betaNota: "Provisório: inferido da Tabela II da ANP (Res. 894/2022), lida de um PDF escaneado.",
+      espec: { min: 815, max: 872, rotulo: "faixa de referência ANP",
+        texto: "Diesel A e C: S10 de 815,0 a 850,0 e S500 de 815,0 a 865,0 kg/m³ (Res. ANP 968/2024). Para o diesel B (mistura com biodiesel) a ANP calcula a faixa conforme o teor de biodiesel; aqui vale a faixa de 815,0 a 872,0 kg/m³, até B20." },
+      bloqueio: { min: 810, max: 880 },
+      exemplo: { dens: "843", ta: "23", tct: "27", vol: "30000" }
+    },
+    gasolina: {
+      nome: "Gasolina",
+      beta: 0.00109,
+      betaNota: "Provisório; a densidade e o fator usam a Tabela II (mesmo cálculo para gasolina A e C).",
+      espec: { min: 688.9, max: null, rotulo: "especificação ANP",
+        texto: "Mínimo de 688,9 kg/m³ para gasolina A e de 715,0 kg/m³ para gasolina C. O aviso usa o menor valor (688,9), porque a aba atende os dois produtos." },
+      bloqueio: { min: 680, max: 780 },
+      exemplo: { dens: "728", ta: "25", tct: "28", vol: "30000" }
+    },
+    anidro: {
+      nome: "Etanol anidro",
+      beta: 0.00110,
+      betaNota: "Usado só quando a temperatura passa de 40 ºC; até 40 ºC, d20, ºINPM e fator saem da equação da NBR 5992:2016.",
+      espec: { min: null, max: 791.5, rotulo: "especificação ANP",
+        texto: "Máximo de 791,5 kg/m³ (Res. ANP 907/2022)." },
+      bloqueio: { min: 788, max: 795 },
+      inpm: { espec: { min: 99.3, max: null },
+        texto: "Mínimo de 99,3 % m/m (Res. ANP 907/2022)." },
+      exemplo: { dens: "787,8", ta: "24", tct: "27", vol: "30000" }
+    },
+    hidratado: {
+      nome: "Etanol hidratado",
+      beta: 0.00114,
+      betaNota: "Usado só quando a temperatura passa de 40 ºC; até 40 ºC, d20, ºINPM e fator saem da equação da NBR 5992:2016.",
+      espec: { min: 802.9, max: 811.2, rotulo: "especificação ANP",
+        texto: "802,9 a 811,2 kg/m³ (Res. ANP 907/2022)." },
+      bloqueio: { min: 800, max: 816 },
+      inpm: { espec: { min: 92.5, max: 95.4 },
+        texto: "92,5 a 95,4 % m/m (Res. ANP 907/2022)." },
+      exemplo: { dens: "806", ta: "25", tct: "28", vol: "30000" }
+    }
+  };
+
+  /* ---------- Funções puras ---------- */
+  function parseNum(s, milhar) {
+    if (s === null || s === undefined) return null;
+    s = String(s).trim().replace(/\s/g, "");
+    if (s === "") return null;
+    if (milhar && /^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, "");
+    s = s.replace(",", ".");
+    if (!/^-?\d+(\.\d+)?$/.test(s)) return NaN;
+    return parseFloat(s);
+  }
+  function lerDensidade(v) {
+    return v < 5 ? { kg: v * 1000, un: "g/cm³" } : { kg: v, un: "kg/m³" };
+  }
+  function dentro(v, f) {
+    return (f.min === null || v >= f.min) && (f.max === null || v <= f.max);
+  }
+  function arred(x, d) { var k = Math.pow(10, d); return Math.round(x * k) / k; }
+  function compativeis(d20, exceto) {
+    return ORDEM.filter(function (id) {
+      return id !== exceto && dentro(d20, PRODUTOS[id].bloqueio);
+    }).map(function (id) { return PRODUTOS[id].nome; });
+  }
+
+  /* Massa específica a 20 ºC (kg/m³) por teor alcoólico em massa (% m/m = ºINPM), passo de 1 %.
+     Fonte: tabela de densidade de misturas etanol-água a 20 ºC (handymath.com), conferida com os
+     pares da ANP: 99,3 = 791,5; 92,5 = 811,2; 93,8 = 807,6. */
+  var TABELA = [[85, 830.95], [86, 828.40], [87, 825.83], [88, 823.23], [89, 820.62], [90, 817.97],
+    [91, 815.29], [92, 812.57], [93, 809.83], [94, 807.05], [95, 804.24], [96, 801.38],
+    [97, 798.46], [98, 795.47], [99, 792.43], [100, 789.34]];
+
+  function inpmDeDensidade(d) {
+    var T = TABELA, ult = T.length - 1;
+    var abaixo = d < T[ult][1];
+    for (var i = 0; i < ult; i++) {
+      if (abaixo ? i === ult - 1 : (d <= T[i][1] && d >= T[i + 1][1])) {
+        var v = T[i][0] + (T[i][1] - d) / (T[i][1] - T[i + 1][1]) * (T[i + 1][0] - T[i][0]);
+        return { valor: abaixo ? 100 : arred(v, 1), bruto: v, abaixoPuro: abaixo,
+          p1: T[i][0], p2: T[i + 1][0], d1: T[i][1], d2: T[i + 1][1] };
+      }
+    }
+    return null;
+  }
+
+  /* Tabela II da ANP (Res. 894/2022): fator de correção a 0 e 50 ºC por densidade a 20 ºC (g/cm³ x 1000).
+     Lidos da tabela oficial; entre eles o fator segue FC = 1 + a(t-20) + b(t-20)^2, com a e b por densidade. */
+  var TAB2 = [[680,1.0262,0.9601],[700,1.0248,0.9624],[720,1.0234,0.9646],[740,1.0220,0.9667],[760,1.0206,0.9689],
+    [780,1.0192,0.9710],[800,1.0181,0.9728],[820,1.0171,0.9743],[840,1.0163,0.9756],[860,1.0157,0.9766],
+    [880,1.0152,0.9775],[900,1.0147,0.9782]];
+  function coefTab(dk) {
+    var i = 0;
+    while (i < TAB2.length - 2 && dk > TAB2[i + 1][0]) i++;
+    var u = (dk - TAB2[i][0]) / (TAB2[i + 1][0] - TAB2[i][0]), a = 0, b = 0;
+    [TAB2[i], TAB2[i + 1]].forEach(function (n, k) {
+      var A = n[1] - 1, B = n[2] - 1, w = k ? u : 1 - u;
+      a += w * (900 * A - 400 * B) / -30000; b += w * (-20 * B - 30 * A) / -30000;
+    });
+    return { a: a, b: b };
+  }
+  /* Etanol: equação de Bettin e Spieweck (ABNT NBR 5992:2016, anexo A), válida de -20 a 40 ºC.
+     ME(GM, t) = massa específica (kg/m³) do etanol com GM % m/m na temperatura t. */
+  var BS_A = [913.76673, -221.75948, -59.61786, 146.82019, -566.5175, 621.18006, 3782.4439, -9745.3133, -9573.4653, 32677.808, 8763.7383, -39026.437];
+  var BS_B = [-0.7943755, -0.001216841, 3.50178E-06, 1.77094E-07, -3.41388E-09, -9.98802E-11];
+  var BS_C = [
+    [-0.39158709, 1.1518337, -5.0416999, 13.381608, 4.5899913, -118.21, 190.5402, 339.81954, -900.32344, -349.32012, 1285.9318],
+    [-0.000120832, -0.005746625, 0.12030894, -0.23519694, -1.0362738, 2.1804505, 4.2763108, -6.8624848, -6.9384031, 7.4460428],
+    [-3.86832E-05, -0.000209114, 0.002671389, 0.004104205, -0.049364385, -0.017952946, 0.29012506, 0.023001712, -0.54150139],
+    [-5.60249E-07, -1.26492E-06, 3.4864E-06, -1.51687E-06],
+    [-1.44417E-08, 1.34705E-08]];
+  var ET_TMAX = 40, ET_GAMA = 0.000036;
+  function meEtanol(gm, t) {
+    var x = gm / 100 - 0.5, dt = t - T_REF, s = BS_A[0], k, i;
+    for (k = 2; k <= 12; k++) s += BS_A[k - 1] * Math.pow(x, k - 1);
+    for (k = 1; k <= 6; k++) s += BS_B[k - 1] * Math.pow(dt, k);
+    for (i = 1; i <= 5; i++) for (k = 1; k <= BS_C[i - 1].length; k++) s += BS_C[i - 1][k - 1] * Math.pow(x, k) * Math.pow(dt, i);
+    return s;
+  }
+  /* Dado o valor lido (kg/m³) na temperatura ta, acha o teor GM (% m/m) e a massa específica a 20 ºC. */
+  function etanolModelo(kg, ta) {
+    if (ta > ET_TMAX) return null;
+    var lo = 60, hi = 100;
+    if (kg > meEtanol(lo, ta) || kg < meEtanol(hi, ta)) return null;
+    for (var i = 0; i < 60; i++) {
+      var m = (lo + hi) / 2;
+      if (meEtanol(m, ta) > kg) lo = m; else hi = m;
+    }
+    var gm = (lo + hi) / 2;
+    return { gm: gm, mm: gm, d: meEtanol(gm, T_REF) };
+  }
+  /* Fator de correção do volume do etanol: FCV = ME_lida / ME_20 × [1 + 0,000036 × (t − 20)]. */
+  function fcEtanol(info, tct, beta) {
+    if (!info || tct > ET_TMAX) return { fc: arred(1 / (1 + beta * (tct - T_REF)), 4), beta: beta };
+    var rt = meEtanol(info.gm, tct), g = 1 + ET_GAMA * (tct - T_REF);
+    return { fc: arred(rt / info.d * g, 4), rt: rt, d20: info.d, g: g };
+  }
+
+  /* Densidade observada -> 20 ºC: correção do densímetro de vidro e, depois, volume pelo fator da Tabela II
+     (iteração, pois o fator depende da própria d20). */
+  function d20Tabela(kg, ta) {
+    var x = ta - T_REF, hyc = 1 - 0.000023 * x - 0.00000002 * x * x, dc = kg * hyc, d = dc;
+    for (var i = 0; i < 20; i++) { var c = coefTab(d); d = dc / (1 + c.a * x + c.b * x * x); }
+    return { d: d, dc: dc, hyc: hyc, fc: dc / d };
+  }
+  function fcTabela(d20kg, t) {
+    var dk = Math.round(d20kg / 2) * 2, c = coefTab(dk), x = t - T_REF;
+    return { fc: arred(1 + c.a * x + c.b * x * x, 4), dk: dk, a: c.a, b: c.b };
+  }
+
+  /* e: { dens, ta, tct, vol, beta } com número, null (vazio) ou NaN (inválido) */
+  function avaliar(id, e) {
+    var p = PRODUTOS[id];
+    var r = { campos: {}, bloqueio: null, pendente: [], leitura: null,
+      d20: null, d20kg: null, fc: null, v20: null, perdas: null, volLiq: null, specD: null, inpm: null, inpmSpec: null, beta: null };
+
+    var betaOk = false;
+    if (e.beta === null) r.campos.beta = "Informe o coeficiente.";
+    else if (isNaN(e.beta) || e.beta < 0.0003 || e.beta > 0.002) r.campos.beta = "Use um valor entre 0,0003 e 0,002.";
+    else { betaOk = true; r.beta = e.beta; }
+
+    var densOk = false, kg = null;
+    if (e.dens === null) r.pendente.push("a densidade");
+    else if (isNaN(e.dens)) r.campos.dens = "Digite um número, por exemplo 857 ou 0,857.";
+    else {
+      var l = lerDensidade(e.dens);
+      if (l.kg < 500 || l.kg > 1100) r.campos.dens = "Fora do intervalo possível (500 a 1100 kg/m³).";
+      else { densOk = true; kg = l.kg; r.leitura = l; }
+    }
+
+    function temp(v, nome, chave) {
+      if (v === null) { r.pendente.push(nome); return false; }
+      if (isNaN(v)) { r.campos[chave] = "Digite um número, por exemplo 25,5."; return false; }
+      if (v < TEMP_MIN || v > TEMP_MAX) { r.campos[chave] = "Use uma temperatura entre " + TEMP_MIN + " e " + TEMP_MAX + " ºC."; return false; }
+      return true;
+    }
+    var taOk = temp(e.ta, "a temperatura da amostra", "ta");
+    var tctOk = temp(e.tct, "a temperatura do CT", "tct");
+
+    var volOk = false;
+    if (e.vol !== null) {
+      if (isNaN(e.vol) || e.vol <= 0) r.campos.vol = "Digite um volume maior que zero.";
+      else volOk = true;
+    }
+    var compV = 0;
+    if (e.comp !== null && e.comp !== undefined) {
+      if (isNaN(e.comp) || e.comp < 0) r.campos.comp = "Digite um valor maior ou igual a zero.";
+      else if (volOk && e.comp >= e.vol) r.campos.comp = "O complete deve ser menor que o volume ambiente.";
+      else compV = e.comp;
+    }
+    if (r.campos.comp) volOk = false;
+    var fatOk = false;
+    if (e.fat !== null && e.fat !== undefined) {
+      if (isNaN(e.fat) || e.fat <= 0) r.campos.fat = "Digite um volume maior que zero.";
+      else fatOk = true;
+    }
+
+    if (betaOk && densOk && taOk) {
+      var usaTab = id === "diesel" || id === "gasolina";
+      r.dInfo = usaTab ? d20Tabela(kg, e.ta) : null;
+      r.etInfo = (id === "hidratado" || id === "anidro") ? etanolModelo(kg, e.ta) : null;
+      var d20kg = usaTab ? r.dInfo.d : (r.etInfo ? r.etInfo.d : kg * (1 + e.beta * (e.ta - T_REF)));
+      var d20r = arred(d20kg, 1);
+      if (!dentro(d20r, p.bloqueio)) {
+        var sug = compativeis(d20r, id);
+        if (!r.bloqueio) r.bloqueio = { tipo: "dens", msg: "A densidade a 20 ºC de " + fmt(d20r, 1) + " kg/m³ está fora da faixa aceita para " + p.nome +
+          " (" + fmt(p.bloqueio.min, 1) + " a " + fmt(p.bloqueio.max, 1) + " kg/m³). " +
+          (sug.length ? "Esse valor é compatível com: " + sug.join(", ") + "." : "Nenhum outro produto aceita esse valor; confira a leitura e as temperaturas.") };
+      } else {
+        r.d20kg = d20kg;
+        r.d20 = d20r;
+        r.specD = (p.espec.min === null && p.espec.max === null) ? null : dentro(d20r, p.espec);
+        if (p.inpm) {
+          r.inpm = r.etInfo ? { valor: arred(r.etInfo.mm, 1), bruto: r.etInfo.mm, tab: true } : inpmDeDensidade(d20r);
+          if (r.inpm) r.inpmSpec = dentro(r.inpm.valor, p.inpm.espec);
+        }
+      }
+    }
+
+    if (r.bloqueio) { r.d20 = null; r.d20kg = null; r.specD = null; return r; }
+
+    if (betaOk && tctOk && r.d20 !== null) {
+      r.fcEt = (id === "hidratado" || id === "anidro") ? fcEtanol(r.etInfo, e.tct, e.beta) : null;
+      if (r.fcEt) { r.fc = r.fcEt.fc; r.fcInfo = null; }
+      else { r.fcInfo = fcTabela(r.d20, e.tct); r.fc = r.fcInfo.fc; }
+      if (volOk) { r.volLiq = e.vol - compV; r.v20 = r.volLiq * r.fc; }
+      if (volOk && fatOk) r.perdas = arred(r.v20, 0) - e.fat;
+    }
+    return r;
+  }
+
+  /* ---------- Formatação ---------- */
+  function fmt(x, d) {
+    return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d }).format(x);
+  }
+  function fa(x) {
+    return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 5 }).format(x);
+  }
+
+  if (typeof globalThis !== "undefined") globalThis.__calc = {fcTabela,  PRODUTOS: PRODUTOS, ORDEM: ORDEM, parseNum: parseNum, avaliar: avaliar, inpmDeDensidade: inpmDeDensidade };
+  if (typeof document === "undefined") return;
+
+  /* ---------- Interface ---------- */
+  var $ = function (id) { return document.getElementById(id); };
+  var CAMPOS = ["dens", "ta", "tct", "vol", "comp", "fat"];
+  var atual = "diesel";
+  var st = {};
+  ORDEM.forEach(function (id) { st[id] = novoEstado(id); });
+
+  function novoEstado(id) {
+    var ex = PRODUTOS[id].exemplo;
+    return { dens: ex.dens, ta: ex.ta, tct: ex.tct, vol: ex.vol, comp: "", fat: "", exemplo: true };
+  }
+
+  function desenharAbas() {
+    $("tabs").innerHTML = ORDEM.map(function (id) {
+      return '<button type="button" role="tab" id="tab-' + id + '" data-id="' + id + '" aria-selected="' + (id === atual) + '">' + PRODUTOS[id].nome + "</button>";
+    }).join("");
+  }
+
+  function preencher() {
+    var p = PRODUTOS[atual], s = st[atual];
+    CAMPOS.forEach(function (c) { $("f-" + c).value = s[c]; });
+    $("tag-ex").hidden = !s.exemplo;
+  }
+
+  function marcarErros(r) {
+    CAMPOS.forEach(function (c) {
+      var msg = r.campos[c] || "";
+      $("e-" + c).textContent = msg;
+      $("e-" + c).hidden = !msg;
+      $("w-" + c).setAttribute("data-bad", msg ? "true" : "false");
+      $("f-" + c).setAttribute("aria-invalid", msg ? "true" : "false");
+    });
+  }
+
+  function chip(cls, txt) { return '<span class="chip ' + cls + '">' + txt + "</span>"; }
+
+  function chipDens(p, r) {
+    if (r.specD === null) return chip("neutro", "Sem limite numérico localizado");
+    var ref = p.espec.rotulo;
+    return r.specD ? chip("ok", "Dentro da " + ref) : chip("warn", "Fora da " + ref + " (aviso)");
+  }
+
+  function linhaResultado(titulo, valor, extra, formula, legenda) {
+    var leg = legenda.map(function (x) { return "<dt>" + x[0] + "</dt><dd>" + x[1] + "</dd>"; }).join("");
+    return '<article class="res"><div class="res-val"><h3>' + titulo + "</h3>" + valor + extra + "</div>" +
+      '<div class="res-why"><div class="formula">' + formula + "</div><dl class=\"legend\">" + leg + "</dl></div></article>";
+  }
+
+  function desenharResultados(r, e) {
+    var p = PRODUTOS[atual], html = "";
+
+    if (r.bloqueio) {
+      html += '<div class="msg crit" role="alert"><strong>Produto não confere</strong><span>' + r.bloqueio.msg + "</span></div>";
+      $("out").innerHTML = html; return;
+    }
+
+    if (r.leitura && r.leitura.un === "g/cm³") {
+      html += '<p class="note">Densidade lida como ' + fmt(e.dens, 4) + " g/cm³ (" + fmt(r.leitura.kg, 1) + " kg/m³).</p>";
+    }
+
+    if (r.d20 === null) {
+      var falta = r.pendente.length ? "Informe " + r.pendente.join(", ") + " para ver os resultados." : "Corrija os campos marcados para ver os resultados.";
+      html += '<div class="msg info"><span>' + falta + "</span></div>";
+      $("out").innerHTML = html; return;
+    }
+
+    var kg = r.leitura.kg, b = e.beta;
+    var dTxt = fmt(r.d20, 1);
+    html += linhaResultado(
+      "Densidade a 20 ºC",
+      '<p class="big">' + dTxt + " <span>kg/m³</span></p>",
+      '<p class="alt">' + fmt(r.d20 / 1000, 4) + " g/cm³</p>" + chipDens(p, r),
+      r.etInfo
+      ? "<code>d<sub>20</sub> = ME(GM, 20 ºC), com GM tal que ME(GM, t<sub>a</sub>) = d<sub>t</sub></code>" +
+        '<code class="num">GM = ' + fmt(r.etInfo.gm, 2) + " % m/m: ME(" + fmt(r.etInfo.gm, 2) + "; " + fa(e.ta) + " ºC) = " + fa(kg) + ", ME(" + fmt(r.etInfo.gm, 2) + "; 20 ºC) = " + fmt(r.d20kg, 2) + "</code>"
+      : r.dInfo
+      ? "<code>d<sub>20</sub> = d<sub>t</sub> × H / FC<sub>a</sub>, com H = 1 − 0,000023 × (t<sub>a</sub> − 20) − 2×10⁻⁸ × (t<sub>a</sub> − 20)²</code>" +
+        '<code class="num">= ' + fa(kg) + " × " + r.dInfo.hyc.toFixed(6).replace(".", ",") + " / " + r.dInfo.fc.toFixed(5).replace(".", ",") + " = " + fmt(r.d20kg, 2) + "</code>"
+      : "<code>d<sub>20</sub> = d<sub>t</sub> × [1 + β × (t<sub>a</sub> − 20)]</code>" +
+      '<code class="num">= ' + fa(kg) + " × [1 + " + fa(b) + " × (" + fa(e.ta) + " − 20)] = " + fmt(r.d20kg, 2) + "</code>",
+      [["d<sub>20</sub>", "densidade a 20 ºC (kg/m³)"],
+       ["d<sub>t</sub>", "densidade observada na amostra (kg/m³)"],
+       r.etInfo ? ["ME", "massa específica do etanol (kg/m³) em função do teor GM (% m/m) e da temperatura t, pela equação de Bettin e Spieweck (ABNT NBR 5992:2016, anexo A, válida de −20 a 40 ºC)"] : null,
+       r.etInfo ? ["GM", "teor alcoólico (% m/m) que faz a equação reproduzir a densidade lida na temperatura da amostra; achado por bisseção"] : null,
+       r.etInfo ? null : r.dInfo ? ["H", "correção do densímetro de vidro (dilatação do vidro entre t<sub>a</sub> e 20 ºC)"] : ["β", "coeficiente de expansão volumétrica do produto, valor fixo (ºC⁻¹)"],
+       r.etInfo ? null : r.dInfo ? ["FC<sub>a</sub>", "fator da Tabela II (sem arredondar) para a temperatura da amostra, na própria d<sub>20</sub>; calculado por iteração"] : null,
+       ["t<sub>a</sub>", "temperatura da amostra (ºC)"],
+       ["20", "temperatura de referência (ºC)"]].filter(Boolean)
+    );
+
+    if (p.inpm && r.inpm) {
+      var q = r.inpm;
+      var chipI = q.abaixoPuro
+        ? chip("warn", "Densidade abaixo da do etanol puro (789,3 kg/m³)")
+        : (r.inpmSpec ? chip("ok", "Dentro da especificação ANP") : chip("warn", "Fora da especificação ANP (aviso)"));
+      html += linhaResultado(
+        "Grau alcoólico",
+        '<p class="big">' + fmt(q.valor, 1) + " <span>% m/m (ºINPM)</span></p>",
+        chipI,
+        q.tab
+        ? "<code>ºINPM = GM, tal que ME(GM, t<sub>a</sub>) = d<sub>t</sub></code>" +
+          '<code class="num">= ' + fmt(q.bruto, 2) + " % m/m</code>"
+        : "<code>ºINPM = p<sub>1</sub> + (d<sub>1</sub> − d<sub>20</sub>) / (d<sub>1</sub> − d<sub>2</sub>) × (p<sub>2</sub> − p<sub>1</sub>)</code>" +
+        '<code class="num">= ' + q.p1 + " + (" + fmt(q.d1, 2) + " − " + fmt(r.d20, 1) + ") / (" + fmt(q.d1, 2) + " − " + fmt(q.d2, 2) + ") × (" + q.p2 + " − " + q.p1 + ") = " + fmt(q.bruto, 2) +
+        (q.abaixoPuro ? ", limitado a 100,0" : "") + "</code>",
+        q.tab
+        ? [["ºINPM", "grau alcoólico em % massa/massa (equivale a % m/m)"],
+           ["ME", "equação de Bettin e Spieweck da ABNT NBR 5992:2016 (anexo A)"],
+           ["d<sub>t</sub>", "densidade observada na amostra (kg/m³)"],
+           ["t<sub>a</sub>", "temperatura da amostra (ºC)"]]
+        : [["ºINPM", "grau alcoólico em % massa/massa (equivale a % m/m)"],
+         ["p<sub>1</sub>, p<sub>2</sub>", "teores (% m/m) das duas linhas da tabela entre as quais cai d<sub>20</sub>"],
+         ["d<sub>1</sub>, d<sub>2</sub>", "massa específica a 20 ºC dessas duas linhas (kg/m³)"],
+         ["d<sub>20</sub>", "densidade a 20 ºC calculada acima, em 0,1 kg/m³"],
+         ["Tabela", "massa específica a 20 ºC por % m/m, passo de 1 %, interpolação linear. Como d<sub>20</sub> usa β, um erro de 0,0001 em β com 5 ºC de diferença muda o resultado em cerca de 0,15 ºINPM"]]
+      );
+    }
+
+    if (r.fc === null) {
+      html += '<div class="msg info"><span>Informe a temperatura do CT para ver o fator de correção.</span></div>';
+    } else {
+      html += linhaResultado(
+        "Fator de correção a 20 ºC",
+        '<p class="big">' + fmt(r.fc, 4) + "</p>",
+        "",
+        r.fcEt && r.fcEt.beta
+        ? "<code>FC<sub>20</sub> = 1 / [1 + β × (t<sub>CT</sub> − 20)]</code>" +
+          '<code class="num">= 1 / [1 + ' + fa(e.beta) + " × (" + fa(e.tct) + " − 20)] = " + fmt(r.fc, 4) + "</code>"
+        : r.fcEt
+        ? "<code>FC<sub>20</sub> = ρ<sub>CT</sub> / ρ<sub>20</sub> × [1 + 0,000036 × (t<sub>CT</sub> − 20)]</code>" +
+          '<code class="num">= ' + fmt(r.fcEt.rt, 2) + " / " + fmt(r.fcEt.d20, 2) + " × " + r.fcEt.g.toFixed(6).replace(".", ",") + " = " + fmt(r.fc, 4) + "</code>"
+        : "<code>FC<sub>20</sub> = 1 + a × (t<sub>CT</sub> − 20) + c × (t<sub>CT</sub> − 20)²</code>" +
+        '<code class="num">= 1 + (' + (r.fcInfo.a * 1e3).toFixed(4).replace(".", ",") + "×10⁻³) × (" + fa(e.tct) + " − 20) + (" + (r.fcInfo.b * 1e7).toFixed(2).replace(".", ",") + "×10⁻⁷) × (" + fa(e.tct) + " − 20)² = " + fmt(r.fc, 4) + "</code>",
+        (r.fcEt && r.fcEt.beta
+        ? [["FC<sub>20</sub>", "fator que leva o volume do CT para 20 ºC (4 casas)"],
+           ["β", "coeficiente fixo do etanol (ºC⁻¹), usado porque a equação da norma vale até 40 ºC"],
+           ["t<sub>CT</sub>", "temperatura do caminhão-tanque (ºC)"]]
+        : r.fcEt
+        ? [["FC<sub>20</sub>", "fator que leva o volume do CT para 20 ºC (4 casas), FCV da NBR 5992:2016"],
+           ["ρ<sub>CT</sub>", "massa específica da mesma mistura (mesmo GM) na temperatura do CT (kg/m³), ME(GM, t<sub>CT</sub>)"],
+           ["ρ<sub>20</sub>", "massa específica dessa mistura a 20 ºC (kg/m³)"],
+           ["0,000036", "correção da dilatação do vidro do densímetro (ºC⁻¹), coeficiente da ABNT NBR 5992:2016"],
+           ["t<sub>CT</sub>", "temperatura do caminhão-tanque (ºC); a equação vale até 40 ºC"]]
+        : [["FC<sub>20</sub>", "fator que leva o volume do CT para 20 ºC (4 casas, como nas tabelas da ANP)"],
+         ["a, c", "coeficientes obtidos da Tabela II oficial da ANP para a densidade a 20 ºC arredondada ao inteiro par mais próximo (" + r.fcInfo.dk + " kg/m³)"],
+         ["t<sub>CT</sub>", "temperatura do caminhão-tanque (ºC)"],
+         ["20", "temperatura de referência (ºC)"],
+         ["d<sub>20</sub>", "define a, c: o fator depende da densidade, como na tabela"]])
+      );
+    }
+
+    if (r.fc !== null) {
+      if (r.v20 === null) {
+        html += '<div class="msg info"><span>Informe o volume ambiente para calcular o volume a 20 ºC.</span></div>';
+      } else {
+        html += linhaResultado(
+          "Volume a 20 ºC",
+          '<p class="big">' + fmt(r.v20, 0) + " <span>L</span></p>",
+          "",
+          "<code>V<sub>20</sub> = (V<sub>amb</sub> − V<sub>comp</sub>) × FC<sub>20</sub></code>" +
+          '<code class="num">= (' + fmt(e.vol, 0) + " − " + fmt(e.vol - r.volLiq, 0) + ") × " + fmt(r.fc, 4) + " = " + fmt(r.v20, 0) + "</code>",
+          [["V<sub>20</sub>", "volume a 20 ºC (L)"],
+           ["V<sub>amb</sub>", "volume ambiente, na temperatura do CT (L)"],
+           ["V<sub>comp</sub>", "complete (L); se não informado, vale zero"],
+           ["FC<sub>20</sub>", "fator de correção a 20 ºC, já arredondado em 4 casas"]]
+        );
+        if (r.perdas !== null) {
+          var pv = r.perdas, rot = pv > 0 ? chip("ok", "Sobra") : (pv < 0 ? chip("warn", "Perda") : chip("neutro", "Sem diferença"));
+          html += linhaResultado(
+            "Perdas e sobras",
+            '<p class="big">' + (pv > 0 ? "+" : "") + fmt(pv, 0) + " <span>L</span></p>",
+            rot,
+            "<code>Perdas e sobras = V<sub>20</sub> − V<sub>fat</sub></code>" +
+            '<code class="num">= ' + fmt(r.v20, 0) + " − " + fmt(e.fat, 0) + " = " + (pv > 0 ? "+" : "") + fmt(pv, 0) + "</code>",
+            [["V<sub>fat</sub>", "volume faturado (L)"],
+             ["V<sub>20</sub>", "volume a 20 ºC calculado acima (L)"],
+             ["Sinal", "positivo é sobra (volume a 20 ºC acima do faturado); negativo é perda"]]
+          );
+        }
+      }
+    }
+    $("out").innerHTML = html;
+  }
+
+  function desenharLimites() {
+    var p = PRODUTOS[atual], b = p.bloqueio;
+    var linhas = "";
+    linhas += "<tr><th>Densidade a 20 ºC, especificação</th><td>" + p.espec.texto + "</td></tr>";
+    linhas += "<tr><th>Densidade a 20 ºC, bloqueio</th><td>" + fmt(b.min, 1) + " a " + fmt(b.max, 1) + " kg/m³</td></tr>";
+    if (p.inpm) {
+      linhas += "<tr><th>Grau alcoólico (resultado), especificação</th><td>" + p.inpm.texto + " Calculado pela equação de Bettin e Spieweck (NBR 5992:2016, anexo A), válida até 40 ºC.</td></tr>";
+    }
+    linhas += "<tr><th>Temperaturas</th><td>" + TEMP_MIN + " a " + TEMP_MAX + " ºC (amostra e CT)</td></tr>";
+    linhas += "<tr><th>Coeficiente β (fixo, só densidade)</th><td>" + fa(p.beta) + " ºC⁻¹. " + p.betaNota + "</td></tr>";
+    $("t-lim").innerHTML = "<tbody>" + linhas + "</tbody>";
+    $("n-lim").textContent = "Fora da faixa de bloqueio, o cálculo não roda, para evitar o produto errado. Fora da especificação mas dentro do bloqueio, o cálculo roda e o resultado traz um aviso. " +
+      "Biodiesel e diesel se sobrepõem entre 840 e 880 kg/m³, então a densidade sozinha não separa os dois.";
+  }
+
+  function desenharFontes() {
+    $("src").innerHTML = "<strong>Fontes consultadas</strong><ul>" +
+      '<li><a href="https://www.gov.br/anp/pt-br/assuntos/qualidade-de-produtos/tabelas-de-conversao-da-densidade-e-conversao-de-volume-resolucao-anp-no-894-2022" target="_blank" rel="noopener">ANP: tabelas oficiais de densidade e volume a 20 ºC (Res. 894/2022)</a>. O fator de correção vem da Tabela II (ajuste a partir dos valores a 0 e 50 ºC); a densidade a 20 ºC de diesel e gasolina usa a correção do densímetro e o mesmo fator, como na Tabela I; biodiesel e etanol seguem com β fixo. Para uso fiscal ou de custódia valem as tabelas.</li>' +
+      '<li><a href="https://www.normasbrasil.com.br/norma/resolucao-968-2024_460796.html" target="_blank" rel="noopener">Res. ANP 968/2024, óleo diesel</a></li>' +
+      '<li><a href="https://www.normasbrasil.com.br/norma/resolucao-920-2023_443945.html" target="_blank" rel="noopener">Res. ANP 920/2023, biodiesel</a></li>' +
+      '<li><a href="https://www.novacana.com/pdf/23112022101102_anp-resolucao-907.pdf" target="_blank" rel="noopener">Res. ANP 907/2022, etanol combustível</a></li>' +
+      '<li><a href="https://www.gov.br/anp/pt-br/assuntos/consultas-e-audiencias-publicas/consulta-audiencia-publica/2025/arquivos-consultas-audiencias-publicas-2025/cp-ap-04-2025/ap-04-25-minuta-resolucao_5111124.pdf" target="_blank" rel="noopener">ANP AP 04/2025, gasolina</a></li>' +
+      '<li><a href="https://revistas.uepg.br/index.php/ret/article/download/11483/209209209458/209209210028" target="_blank" rel="noopener">Artigo da UEPG sobre expansão térmica do etanol</a></li>' +
+      '<li><a href="https://handymath.com/calcshtml/etohtable2.html" target="_blank" rel="noopener">Tabela de densidade de misturas etanol-água a 20 ºC por % em massa</a>, usada para calcular o ºINPM; confere com os pares de limites da ANP (99,3 = 791,5; 92,5 = 811,2).</li>' +
+      "</ul>";
+  }
+
+  function ler() {
+    var e = {
+      dens: parseNum($("f-dens").value), ta: parseNum($("f-ta").value),
+      tct: parseNum($("f-tct").value), vol: parseNum($("f-vol").value, true), comp: parseNum($("f-comp").value, true), fat: parseNum($("f-fat").value, true),
+      beta: PRODUTOS[atual].beta
+    };
+    return e;
+  }
+
+  function calcular() {
+    var e = ler();
+    var r = avaliar(atual, e);
+    marcarErros(r);
+    desenharResultados(r, e);
+  }
+
+  $("tabs").addEventListener("click", function (ev) {
+    var b = ev.target.closest("button[data-id]");
+    if (!b || b.getAttribute("data-id") === atual) return;
+    atual = b.getAttribute("data-id");
+    desenharAbas(); preencher(); desenharLimites(); calcular();
+  });
+
+  CAMPOS.forEach(function (c) {
+    $("f-" + c).addEventListener("input", function () {
+      st[atual][c] = $("f-" + c).value;
+      st[atual].exemplo = false;
+      $("tag-ex").hidden = true;
+      calcular();
+    });
+  });
+
+  $("b-limpar").addEventListener("click", function () {
+    st[atual] = { dens: "", ta: "", tct: "", vol: "", comp: "", fat: "", exemplo: false };
+    preencher(); calcular(); $("f-dens").focus();
+  });
+  $("b-exemplo").addEventListener("click", function () {
+    st[atual] = novoEstado(atual);
+    preencher(); calcular();
+  });
+
+  desenharAbas(); preencher(); desenharLimites(); desenharFontes(); calcular();
+})();
+</script>
+
+</body></html>
