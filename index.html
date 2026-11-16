@@ -354,7 +354,7 @@ sub { font-size: .72em; line-height: 0; }
     [-3.86832E-05, -0.000209114, 0.002671389, 0.004104205, -0.049364385, -0.017952946, 0.29012506, 0.023001712, -0.54150139],
     [-5.60249E-07, -1.26492E-06, 3.4864E-06, -1.51687E-06],
     [-1.44417E-08, 1.34705E-08]];
-  var ET_TMAX = 40, ET_GAMA = 0.000036;
+  var ET_TMAX = 40;
   function meEtanol(gm, t) {
     var x = gm / 100 - 0.5, dt = t - T_REF, s = BS_A[0], k, i;
     for (k = 2; k <= 12; k++) s += BS_A[k - 1] * Math.pow(x, k - 1);
@@ -374,11 +374,11 @@ sub { font-size: .72em; line-height: 0; }
     var gm = (lo + hi) / 2;
     return { gm: gm, mm: gm, d: meEtanol(gm, T_REF) };
   }
-  /* Fator de correção do volume do etanol: FCV = ME_lida / ME_20 × [1 + 0,000036 × (t − 20)]. */
+  /* Fator de correção do volume do etanol: FC = ME(GM, tCT) / ME(GM, 20 ºC), sem correção do densímetro de vidro. */
   function fcEtanol(info, tct, beta) {
     if (!info || tct > ET_TMAX) return { fc: arred(1 / (1 + beta * (tct - T_REF)), 4), beta: beta };
-    var rt = meEtanol(info.gm, tct), g = 1 + ET_GAMA * (tct - T_REF);
-    return { fc: arred(rt / info.d * g, 4), rt: rt, d20: info.d, g: g };
+    var rt = meEtanol(info.gm, tct);
+    return { fc: arred(rt / info.d, 4), rt: rt, d20: info.d };
   }
 
   /* Densidade observada -> 20 ºC: correção do densímetro de vidro e, depois, volume pelo fator da Tabela II
@@ -614,8 +614,8 @@ sub { font-size: .72em; line-height: 0; }
         ? "<code>FC<sub>20</sub> = 1 / [1 + β × (t<sub>CT</sub> − 20)]</code>" +
           '<code class="num">= 1 / [1 + ' + fa(e.beta) + " × (" + fa(e.tct) + " − 20)] = " + fmt(r.fc, 4) + "</code>"
         : r.fcEt
-        ? "<code>FC<sub>20</sub> = ρ<sub>CT</sub> / ρ<sub>20</sub> × [1 + 0,000036 × (t<sub>CT</sub> − 20)]</code>" +
-          '<code class="num">= ' + fmt(r.fcEt.rt, 2) + " / " + fmt(r.fcEt.d20, 2) + " × " + r.fcEt.g.toFixed(6).replace(".", ",") + " = " + fmt(r.fc, 4) + "</code>"
+        ? "<code>FC<sub>20</sub> = ρ<sub>CT</sub> / ρ<sub>20</sub></code>" +
+          '<code class="num">= ' + fmt(r.fcEt.rt, 2) + " / " + fmt(r.fcEt.d20, 2) + " = " + fmt(r.fc, 4) + "</code>"
         : "<code>FC<sub>20</sub> = 1 + a × (t<sub>CT</sub> − 20) + c × (t<sub>CT</sub> − 20)²</code>" +
         '<code class="num">= 1 + (' + (r.fcInfo.a * 1e3).toFixed(4).replace(".", ",") + "×10⁻³) × (" + fa(e.tct) + " − 20) + (" + (r.fcInfo.b * 1e7).toFixed(2).replace(".", ",") + "×10⁻⁷) × (" + fa(e.tct) + " − 20)² = " + fmt(r.fc, 4) + "</code>",
         (r.fcEt && r.fcEt.beta
@@ -626,7 +626,6 @@ sub { font-size: .72em; line-height: 0; }
         ? [["FC<sub>20</sub>", "fator que leva o volume do CT para 20 ºC (4 casas), FCV da NBR 5992:2016"],
            ["ρ<sub>CT</sub>", "massa específica da mesma mistura (mesmo GM) na temperatura do CT (kg/m³), ME(GM, t<sub>CT</sub>)"],
            ["ρ<sub>20</sub>", "massa específica dessa mistura a 20 ºC (kg/m³)"],
-           ["0,000036", "correção da dilatação do vidro do densímetro (ºC⁻¹), coeficiente da ABNT NBR 5992:2016"],
            ["t<sub>CT</sub>", "temperatura do caminhão-tanque (ºC); a equação vale até 40 ºC"]]
         : [["FC<sub>20</sub>", "fator que leva o volume do CT para 20 ºC (4 casas, como nas tabelas da ANP)"],
          ["a, c", "coeficientes obtidos da Tabela II oficial da ANP para a densidade a 20 ºC arredondada ao inteiro par mais próximo (" + r.fcInfo.dk + " kg/m³)"],
